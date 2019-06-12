@@ -29,7 +29,16 @@ function normalize(x, mean, min, max) {
     return (x - mean) / (max - min)
 }
 
-var workout = workouts[2][0];
+var randomWorkouts = [];
+for (var j = 0; j < 10; j++) {
+    var n = Math.floor(Math.random() * 15);
+    while (randomWorkouts.includes(n)) {
+        n = Math.floor(Math.random() * 15);
+    }
+    randomWorkouts.push(n)
+}
+
+var workout;
 var workoutKeys = Object.keys(workoutOrdinato);
 
 function createFeatureList() {
@@ -45,8 +54,7 @@ function createFeatureList() {
                     workoutKeys[feature] == "d_pace_std" || workoutKeys[feature] == "d_pace_var" ||
                     workoutKeys[feature] == "p_welldone" || workoutKeys[feature] == "p_walking" || workoutKeys[feature] == "p_running" ||
                     workoutKeys[feature] == "p_unknown" || workoutKeys[feature] == "p_has_objective") {
-                    console.log(element.value/100.0)
-                    value = normalize(parseFloat(element.value)/100.0, norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
+                    value = normalize(parseFloat(element.value) / 100.0, norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
                 } else {
                     value = normalize(parseFloat(element.value), norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
                 }
@@ -120,73 +128,88 @@ var features_meaning = {
     d_pace_var: 0.000915104
 };
 
-var numFeatures = 12;
 
-for (var i = 0; i < numFeatures; i++) {
-    var col_border = document.createElement("div");
-    col_border.id = workoutKeys[i];
-    col_border.className = "col border-hi-feature";
-    col_border.style.marginBottom = "10px";
-    var p_feature = document.createElement("p");
-    p_feature.className = "feature";
-    p_feature.setAttribute("data-toggle", "tooltip");
-    p_feature.title = features_meaning[workoutKeys[i]];
-    p_feature.innerText = workoutKeys[i];
-    var div_slider = document.createElement("div");
-    var input_slider = document.createElement("input");
-    input_slider.id = "range" + i;
-    input_slider.type = "range";
-    input_slider.name = "range";
+function generateHTML(workoutArrayIndex) {
+    var currentMark = Math.trunc(randomWorkouts[workoutArrayIndex]/3);
+    var currentInstance = randomWorkouts[workoutArrayIndex]%3;
+    var numFeatures = (Math.floor(Math.random()*3)+1)*4;
 
-    var featureValue;
-    if (workoutKeys[i] == "d_distance" || workoutKeys[i] == "d_time" || workoutKeys[i] == "d_pace_mean" || workoutKeys[i] == "d_pace_std" || workoutKeys[i] == "d_pace_var") {
-        input_slider.min = -100.0;
-        input_slider.max = 100.0;
-        input_slider.step = 0.001;
-        featureValue = workout[workoutKeys[i]] * 100;
-    } else if (workoutKeys[i] == "p_welldone" || workoutKeys[i] == "p_walking" || workoutKeys[i] == "p_running" || workoutKeys[i] == "p_unknown" || workoutKeys[i] == "p_has_objective") {
-        input_slider.min = 0.0;
-        input_slider.max = 100.0;
-        input_slider.step = 0.001;
-        featureValue = workout[workoutKeys[i]] * 100;
-    } else {
-        if (workoutKeys[i] == "bmi" || workoutKeys[i] == "weight_situation" || workoutKeys[i] == "gender") {
-            input_slider.min = 1;
-            input_slider.max = 5;
-            featureValue = workout[workoutKeys[i]];
+
+    workout = workouts[currentMark][currentInstance];
+    for (var i = 0; i < numFeatures; i++) {
+        var col_border = document.createElement("div");
+        col_border.id = workoutKeys[i];
+        col_border.className = "col border-hi-feature";
+        col_border.style.marginBottom = "10px";
+        var p_feature = document.createElement("p");
+        p_feature.className = "feature";
+        p_feature.setAttribute("data-toggle", "tooltip");
+        p_feature.title = features_meaning[workoutKeys[i]];
+        p_feature.innerText = workoutKeys[i];
+        var div_slider = document.createElement("div");
+        var input_slider = document.createElement("input");
+        input_slider.id = "range" + i;
+        input_slider.type = "range";
+        input_slider.name = "range";
+
+        var featureValue;
+        if (workoutKeys[i] == "d_distance" || workoutKeys[i] == "d_time" || workoutKeys[i] == "d_pace_mean" || workoutKeys[i] == "d_pace_std" || workoutKeys[i] == "d_pace_var") {
+            input_slider.min = -100.0;
+            input_slider.max = 100.0;
+            input_slider.step = 0.001;
+            featureValue = workout[workoutKeys[i]] * 100;
+        } else if (workoutKeys[i] == "p_welldone" || workoutKeys[i] == "p_walking" || workoutKeys[i] == "p_running" || workoutKeys[i] == "p_unknown" || workoutKeys[i] == "p_has_objective") {
+            input_slider.min = 0.0;
+            input_slider.max = 100.0;
+            input_slider.step = 0.001;
+            featureValue = workout[workoutKeys[i]] * 100;
         } else {
-            featureValue = workout[workoutKeys[i]];
-            input_slider.min = featureValue / 4;
-            input_slider.max = featureValue * 4;
-            if (workoutKeys[i] == "r_speed" || workoutKeys[i] == "r_distance" || workoutKeys[i] == "r_pace" || workoutKeys[i] == "bmi") {
-                input_slider.step = 0.001;
+            if (workoutKeys[i] == "bmi" || workoutKeys[i] == "weight_situation" || workoutKeys[i] == "gender") {
+                input_slider.min = 1;
+                input_slider.max = 5;
+                featureValue = workout[workoutKeys[i]];
+            } else {
+                featureValue = workout[workoutKeys[i]];
+                input_slider.min = featureValue / 4;
+                input_slider.max = featureValue * 4;
+                if (workoutKeys[i] == "r_speed" || workoutKeys[i] == "r_distance" || workoutKeys[i] == "r_pace" || workoutKeys[i] == "bmi") {
+                    input_slider.step = 0.001;
+                }
             }
         }
+
+        input_slider.setAttribute("value", featureValue);
+        input_slider.setAttribute("onchange", "outrange" + i + ".value=value");
+        var output_slider = document.createElement("output");
+        output_slider.id = "outrange" + i;
+        //output_slider.innerHTML = workout[workoutKeys[i]];
+        output_slider.innerHTML = featureValue;
+
+        var container;
+        if (i % 2 == 0) {
+            container = document.getElementById('f1');
+            p_feature.setAttribute("data-placement", "left");
+            div_slider.className = "range range-success";
+        } else {
+            container = document.getElementById('f2');
+            p_feature.setAttribute("data-placement", "right");
+            div_slider.className = "range range-primary";
+        }
+
+        div_slider.append(input_slider);
+        div_slider.append(output_slider);
+
+        col_border.append(p_feature);
+        col_border.append(div_slider);
+
+        container.append(col_border);
+        var button = document.getElementById("next_button");
+        button.onclick = function () {
+            $("#f1").empty();
+            $("#f2").empty();
+            generateHTML(workoutArrayIndex+1)
+        };
     }
-
-    input_slider.setAttribute("value", featureValue);
-    input_slider.setAttribute("onchange", "outrange" + i + ".value=value");
-    var output_slider = document.createElement("output");
-    output_slider.id = "outrange" + i;
-    //output_slider.innerHTML = workout[workoutKeys[i]];
-    output_slider.innerHTML = featureValue;
-
-    var container;
-    if (i % 2 == 0) {
-        container = document.getElementById('f1');
-        p_feature.setAttribute("data-placement", "left");
-        div_slider.className = "range range-success";
-    } else {
-        container = document.getElementById('f2');
-        p_feature.setAttribute("data-placement", "right");
-        div_slider.className = "range range-primary";
-    }
-
-    div_slider.append(input_slider);
-    div_slider.append(output_slider);
-
-    col_border.append(p_feature);
-    col_border.append(div_slider);
-
-    container.append(col_border);
 }
+
+generateHTML(0);
