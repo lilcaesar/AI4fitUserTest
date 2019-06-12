@@ -23,6 +23,7 @@ def evaluate(request):
         singleFrame = pd.DataFrame(features, columns)
 
         model = load('AI4fitUserTest/static/ExtraTreesClassifier.joblib')
+        #model = load('AI4fitUserTest/static/LogisticRegression.joblib')
 
         mark = model.predict(singleFrame.T)
 

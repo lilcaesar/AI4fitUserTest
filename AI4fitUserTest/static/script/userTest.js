@@ -24,57 +24,38 @@ var norm_values = {
 };
 //Formula per la normalizzazione
 //self.data[column_name] = self.data[column_name].apply(lambda x: (x - mean_col) / (max_col - min_col))
-var workout3 = {
-    o_distance: -0.057846,
-    p_unknown: -0.0541757,
-    p_walking: 0.114791,
-    p_running: -0.392162,
-    r_time: 0.00832845,
-    r_speed: -0.00843242,
-    r_distance: 0.112499,
-    r_pace: -0.00181375,
-    o_pace: -0.0248329,
-    o_time: 0.013441,
-    p_welldone: 0.505893,
-    weight_situation: 4,
-    age: -0.0842126,
-    height: -0.26717,
-    weight: -0.286194,
-    gender: 0,
-    bmi: 19.9792,
-    calories: -0.126402,
-    p_has_objective: 0.0541757,
-    d_pace_std: -0.000662894,
-    d_pace_mean: 0.000461261,
-    d_time: -0.0103111,
-    d_distance: -0.0126414,
-    d_pace_var: -0.000636324
-};
-
 
 function normalize(x, mean, min, max) {
-    return (x-mean)/(max-min)
+    return (x - mean) / (max - min)
 }
 
-var workout = workout3;
-var workoutKeys = Object.keys(workout);
+var workout = workouts[2][0];
+var workoutKeys = Object.keys(workoutOrdinato);
 
 function createFeatureList() {
     var featureList = [];
-    for(var feature = 0; feature < 24; feature++){
-        var element = document.getElementById("out-range"+feature);
+    for (var feature = 0; feature < 24; feature++) {
+        var element = document.getElementById("outrange" + feature);
         var value;
-        if(element !== null){
-            if(workoutKeys[feature] == "bmi" || workoutKeys[feature] == "weight_situation" || workoutKeys[feature] == "gender"){
+        if (element !== null) {
+            if (workoutKeys[feature] == "bmi" || workoutKeys[feature] == "weight_situation" || workoutKeys[feature] == "gender") {
                 value = parseFloat(element.value)
-            }else {
-                value = normalize(parseFloat(element.value), norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
+            } else {
+                if (workoutKeys[feature] == "d_distance" || workoutKeys[feature] == "d_time" || workoutKeys[feature] == "d_pace_mean" ||
+                    workoutKeys[feature] == "d_pace_std" || workoutKeys[feature] == "d_pace_var" ||
+                    workoutKeys[feature] == "p_welldone" || workoutKeys[feature] == "p_walking" || workoutKeys[feature] == "p_running" ||
+                    workoutKeys[feature] == "p_unknown" || workoutKeys[feature] == "p_has_objective") {
+                    console.log(element.value/100.0)
+                    value = normalize(parseFloat(element.value)/100.0, norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
+                } else {
+                    value = normalize(parseFloat(element.value), norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
+                }
             }
             featureList.push(value)
-        }else{
-            if(workoutKeys[feature] == "bmi" || workoutKeys[feature] == "weight_situation" || workoutKeys[feature] == "gender"){
+        } else {
+            if (workoutKeys[feature] == "bmi" || workoutKeys[feature] == "weight_situation" || workoutKeys[feature] == "gender") {
                 value = parseFloat(workout[workoutKeys[feature]])
-            }else{
+            } else {
                 value = normalize(parseFloat(workout[workoutKeys[feature]]), norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
             }
             featureList.push(value)
@@ -170,11 +151,13 @@ for (var i = 0; i < numFeatures; i++) {
         featureValue = workout[workoutKeys[i]] * 100;
     } else {
         if (workoutKeys[i] == "bmi" || workoutKeys[i] == "weight_situation" || workoutKeys[i] == "gender") {
+            input_slider.min = 1;
+            input_slider.max = 5;
             featureValue = workout[workoutKeys[i]];
         } else {
-            featureValue = reverseNormalize(workout[workoutKeys[i]], norm_values[workoutKeys[i]][0], norm_values[workoutKeys[i]][1], norm_values[workoutKeys[i]][2]);
-            input_slider.min = featureValue / 2;
-            input_slider.max = featureValue * 2;
+            featureValue = workout[workoutKeys[i]];
+            input_slider.min = featureValue / 4;
+            input_slider.max = featureValue * 4;
             if (workoutKeys[i] == "r_speed" || workoutKeys[i] == "r_distance" || workoutKeys[i] == "r_pace" || workoutKeys[i] == "bmi") {
                 input_slider.step = 0.001;
             }
@@ -182,9 +165,9 @@ for (var i = 0; i < numFeatures; i++) {
     }
 
     input_slider.setAttribute("value", featureValue);
-    input_slider.setAttribute("onchange", "range" + i + ".value=value");
+    input_slider.setAttribute("onchange", "outrange" + i + ".value=value");
     var output_slider = document.createElement("output");
-    output_slider.id = "out-range" + i;
+    output_slider.id = "outrange" + i;
     //output_slider.innerHTML = workout[workoutKeys[i]];
     output_slider.innerHTML = featureValue;
 
