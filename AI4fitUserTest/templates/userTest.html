@@ -11,7 +11,12 @@
 </head>
 <body>
 <div class="container" id="list-container">
-    <div class="row justify-content-center border-hi">
+
+    <div class="row justify-content-center">
+        <h2 id="current_workout"></h2>
+    </div>
+
+    <div class="row justify-content-center">
 
         <div id="col1" class="col-sm border-hi text-center">
             <h4>Features</h4>
@@ -25,17 +30,18 @@
         </div>
 
         <div id="col2" class="col-sm border-hi text-center">
-            <h4>Modello #1</h4>
+            <h4 id="model_type"></h4>
+            <p>Voto:</p>
             <!--<div class="row justify-content-center model-text">voto:</div>-->
-            <div class="row model-mark justify-content-center">
+            <div id="mark_div" class="row model-mark justify-content-center">
                 <div id="mark" class="align-middle">?</div>
             </div>
         </div>
 
     </div>
 
-    <div class="row justify-content-center">
-        <button id="next_button" type="button" class="btn btn-outline-info mb-2"> Next workout</button>
+    <div id="button_container" class="row justify-content-center">
+        <button id="next_button" type="button" class="btn btn-outline-info mb-2 wkbotton"> Next workout</button>
     </div>
 
 </div>

@@ -39,6 +39,7 @@ for (var j = 0; j < 10; j++) {
 }
 
 var workout;
+var modelType;
 var workoutKeys = Object.keys(workoutOrdinato);
 
 function createFeatureList() {
@@ -46,7 +47,7 @@ function createFeatureList() {
     for (var feature = 0; feature < 24; feature++) {
         var element = document.getElementById("outrange" + feature);
         var value;
-        if (element !== null) {
+        /*if (element !== null) {
             if (workoutKeys[feature] == "bmi" || workoutKeys[feature] == "weight_situation" || workoutKeys[feature] == "gender") {
                 value = parseFloat(element.value)
             } else {
@@ -67,29 +68,68 @@ function createFeatureList() {
                 value = normalize(parseFloat(workout[workoutKeys[feature]]), norm_values[workoutKeys[feature]][0], norm_values[workoutKeys[feature]][1], norm_values[workoutKeys[feature]][2])
             }
             featureList.push(value)
+        }*/
+        if (element !== null) {
+            if (workoutKeys[feature] == "bmi" || workoutKeys[feature] == "weight_situation" || workoutKeys[feature] == "gender") {
+                value = parseFloat(element.value)
+            } else {
+                if (workoutKeys[feature] == "d_distance" || workoutKeys[feature] == "d_time" || workoutKeys[feature] == "d_pace_mean" ||
+                    workoutKeys[feature] == "d_pace_std" || workoutKeys[feature] == "d_pace_var" ||
+                    workoutKeys[feature] == "p_welldone" || workoutKeys[feature] == "p_walking" || workoutKeys[feature] == "p_running" ||
+                    workoutKeys[feature] == "p_unknown" || workoutKeys[feature] == "p_has_objective") {
+                    value = parseFloat(element.value) / 100.0
+                } else {
+                    value = parseFloat(element.value)
+                }
+            }
+            featureList.push(value)
+        } else {
+            if (workoutKeys[feature] == "bmi" || workoutKeys[feature] == "weight_situation" || workoutKeys[feature] == "gender") {
+                value = parseFloat(workout[workoutKeys[feature]])
+            } else {
+                value = parseFloat(workout[workoutKeys[feature]])
+            }
+            featureList.push(value)
         }
     }
     return featureList
 }
 
+function createSortedNormValues(){
+    var sortedNormValues = [];
+    workoutKeys.forEach(function (featureName) {
+        if(norm_values[featureName] !== undefined) {
+            sortedNormValues.push(norm_values[featureName]);
+        }else{
+            sortedNormValues.push([-1,-1,-1])
+        }
+    });
+    return sortedNormValues;
+}
+
 $(document).ready(function () {
     $('#evaluate_button').on('click', function () {
         var featureList = createFeatureList();
+        var sortedNormValues = createSortedNormValues();
         $.ajax({
             url: '',
             type: 'POST',
             data: {
-                features: featureList
+                features: featureList,
+                modelType: modelType,
+                normValues: sortedNormValues
             },
             success: function (mark) {
-                let element = document.getElementById("mark")
+                let element = document.getElementById("mark");
                 element.innerHTML = mark
             },
             error: function () {
                 console.log("Errore richiesta valutazione")
             }
         })
-    })
+    });
+
+    document.getElementById("evaluate_button").click();
 });
 $(function () {
     $('[data-toggle="tooltip"]').tooltip()
@@ -130,11 +170,11 @@ var features_meaning = {
 
 
 function generateHTML(workoutArrayIndex) {
-    var currentMark = Math.trunc(randomWorkouts[workoutArrayIndex]/3);
-    var currentInstance = randomWorkouts[workoutArrayIndex]%3;
-    var numFeatures = (Math.floor(Math.random()*3)+1)*4;
+    var currentMark = Math.trunc(randomWorkouts[workoutArrayIndex] / 3);
+    var currentInstance = randomWorkouts[workoutArrayIndex] % 3;
+    var numFeatures = (Math.floor(Math.random() * 3) + 1) * 4;
 
-
+    modelType = Math.floor(Math.random() * 3) + 1;
     workout = workouts[currentMark][currentInstance];
     for (var i = 0; i < numFeatures; i++) {
         var col_border = document.createElement("div");
@@ -153,16 +193,14 @@ function generateHTML(workoutArrayIndex) {
         input_slider.name = "range";
 
         var featureValue;
-        if (workoutKeys[i] == "d_distance" || workoutKeys[i] == "d_time" || workoutKeys[i] == "d_pace_mean" || workoutKeys[i] == "d_pace_std" || workoutKeys[i] == "d_pace_var") {
-            input_slider.min = -100.0;
-            input_slider.max = 100.0;
+        if (workoutKeys[i] == "d_distance" || workoutKeys[i] == "d_time" || workoutKeys[i] == "d_pace_mean" ||
+                    workoutKeys[i] == "d_pace_std" || workoutKeys[i] == "d_pace_var" ||
+                    workoutKeys[i] == "p_welldone" || workoutKeys[i] == "p_walking" || workoutKeys[i] == "p_running" ||
+                    workoutKeys[i] == "p_unknown" || workoutKeys[i] == "p_has_objective") {
+            input_slider.min = norm_values[workoutKeys[i]][1]*100.0;
+            input_slider.max = norm_values[workoutKeys[i]][2]*100.0;
             input_slider.step = 0.001;
-            featureValue = workout[workoutKeys[i]] * 100;
-        } else if (workoutKeys[i] == "p_welldone" || workoutKeys[i] == "p_walking" || workoutKeys[i] == "p_running" || workoutKeys[i] == "p_unknown" || workoutKeys[i] == "p_has_objective") {
-            input_slider.min = 0.0;
-            input_slider.max = 100.0;
-            input_slider.step = 0.001;
-            featureValue = workout[workoutKeys[i]] * 100;
+            featureValue = workout[workoutKeys[i]] * 100.0;
         } else {
             if (workoutKeys[i] == "bmi" || workoutKeys[i] == "weight_situation" || workoutKeys[i] == "gender") {
                 input_slider.min = 1;
@@ -183,7 +221,8 @@ function generateHTML(workoutArrayIndex) {
         var output_slider = document.createElement("output");
         output_slider.id = "outrange" + i;
         //output_slider.innerHTML = workout[workoutKeys[i]];
-        output_slider.innerHTML = featureValue;
+        // float limit
+        output_slider.innerHTML = featureValue.toFixed(2);
 
         var container;
         if (i % 2 == 0) {
@@ -204,10 +243,86 @@ function generateHTML(workoutArrayIndex) {
 
         container.append(col_border);
         var button = document.getElementById("next_button");
+
+        document.getElementById("current_workout").innerHTML = "Workout " + parseInt((workoutArrayIndex % 5) + 1);
+        document.getElementById("model_type").innerHTML = "Model " + modelType;
+    }
+
+    // primi 4 allenamenti
+    if (workoutArrayIndex < 4) {
         button.onclick = function () {
             $("#f1").empty();
             $("#f2").empty();
-            generateHTML(workoutArrayIndex+1)
+            generateHTML(workoutArrayIndex + 1);
+            document.getElementById("evaluate_button").click();
+        };
+    }
+    // al quinto cambio il nome del bottone e aggi
+    else if (workoutArrayIndex === 4) {
+        button.innerHTML = 'Evaluation Phase';
+        let col = document.getElementById("col1");
+
+        document.getElementById("evaluate_button").click();
+        button.onclick = function () {
+            $("#f1").empty();
+            $("#f2").empty();
+
+            // rimuovo la vecchia visualizzazione del voto
+            document.getElementById("mark").remove();
+
+            // creo la struttura del nuovo bottone
+            let eval_button = document.createElement("form");
+            let eval_button_div = document.createElement("div");
+            eval_button_div.className = "from-group";
+            let button_input = document.createElement("input");
+            button_input.id = "evaluation_form";
+            button_input.setAttribute("type", "text");
+            button_input.setAttribute("size", "1");
+            button_input.setAttribute("maxlength", "1");
+            button_input.setAttribute("type", "text");
+            button_input.className = "form-control mark-text-zone";
+            button_input.setAttribute("aria-describedby", "inputGroup-sizing-sm");
+            button_input.setAttribute("oninput", "this.value=this.value.replace(/[^1-5]/g,'');");
+
+            eval_button_div.appendChild(button_input);
+            eval_button.appendChild(eval_button_div);
+            // aggiungo il nuovo elemento al posto del precedente
+            document.getElementById("mark_div").appendChild(eval_button);
+
+            // rimuovo il pulsante per la valutazione
+            document.getElementById("evaluate_button").remove();
+
+            document.querySelector('#col2 p').innerHTML = 'Insert mark:';
+
+
+            generateHTML(workoutArrayIndex + 1);
+
+            // disabilito gli slider relativi alle feature
+            col.classList.add("disable-div");
+        };
+        // finisco gli altri allenamenti
+    } else if (workoutArrayIndex < 9) {
+        //document.getElementById("evaluate_button").remove();
+        button.innerHTML = 'Confirm mark';
+        button.onclick = function () {
+            if (document.getElementById("evaluation_form").value !== "") {
+                $("#f1").empty();
+                $("#f2").empty();
+                generateHTML(workoutArrayIndex + 1);
+                document.getElementById("evaluation_form").value = "";
+            } else {
+                alert("No mark inserted!");
+            }
+        };
+        // termino la fase di valutazione... (da fare)
+    } else {
+        button.innerHTML = 'Terminate Evaluation';
+        button.className = "btn btn-outline-success mb-2 wkbotton";
+        button.onclick = function () {
+            $("#f1").empty();
+            $("#f2").empty();
+            console.log('redirect');
+            workoutArrayIndex = numFeatures;
         };
     }
 }
