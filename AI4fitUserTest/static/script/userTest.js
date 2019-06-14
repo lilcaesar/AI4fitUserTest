@@ -41,6 +41,7 @@ for (var j = 0; j < 10; j++) {
 var workout;
 var modelType;
 var workoutKeys = Object.keys(workoutOrdinato);
+var predictions = {};
 
 function createFeatureList() {
     var featureList = [];
@@ -119,9 +120,17 @@ $(document).ready(function () {
                 modelType: modelType,
                 normValues: sortedNormValues
             },
-            success: function (mark) {
+            success: function (response) {
+                //First is mark
+                var data = JSON.parse(response);
                 let element = document.getElementById("mark");
-                element.innerHTML = mark
+                element.innerHTML = data[0];
+                for(var predictionFeature = 0; predictionFeature < 12; predictionFeature++){
+                    var predictionValues = [];
+                    predictionValues.push([data[(predictionFeature*4)+1], data[(predictionFeature*4)+2]]);
+                    predictionValues.push([data[(predictionFeature*4)+3], data[(predictionFeature*4)+4]]);
+                    predictions[workoutKeys[predictionFeature]] = predictionValues;
+                }
             },
             error: function () {
                 console.log("Errore richiesta valutazione")
@@ -208,8 +217,8 @@ function generateHTML(workoutArrayIndex) {
                 featureValue = workout[workoutKeys[i]];
             } else {
                 featureValue = workout[workoutKeys[i]];
-                input_slider.min = featureValue / 4;
-                input_slider.max = featureValue * 4;
+                input_slider.min = norm_values[workoutKeys[i]][1];
+                input_slider.max = norm_values[workoutKeys[i]][2];
                 if (workoutKeys[i] == "r_speed" || workoutKeys[i] == "r_distance" || workoutKeys[i] == "r_pace" || workoutKeys[i] == "bmi") {
                     input_slider.step = 0.001;
                 }

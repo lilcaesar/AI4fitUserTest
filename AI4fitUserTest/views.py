@@ -5,13 +5,12 @@ from django.http import HttpResponse
 from django.utils import six
 
 from joblib import load
-
+import numpy as np
 from random import randint
 
 import pandas as pd
 import sklearn
-
-import time
+import json, codecs, time
 
 columns = ['o_distance', 'p_unknown', 'p_walking', 'p_running', 'r_time',
                'r_speed', 'r_distance', 'r_pace', 'o_pace', 'o_time',
@@ -36,7 +35,7 @@ def createFeatureList(startingList, normValues):
 
 def computeVariation(features, featureIdx, direction, mark, normValues, model):
     if (mark == 5 and direction == 1)or(mark == 1 and direction == 0):
-        return {columns[featureIdx]: [-1.0, -1.0]}
+        return [-1.0, -1.0]
     else:
         left = 0
         right = 0
@@ -68,9 +67,9 @@ def computeVariation(features, featureIdx, direction, mark, normValues, model):
                 else:
                     right = currentValue
             if found:
-                return {columns[featureIdx]: [newValue, newPrediction]}
+                return [newValue, newPrediction]
             else:
-                return {columns[featureIdx]: [-1.0, -1.0]}
+                return [-1.0, -1.0]
         else:
             left = features[featureIdx]
             right = normValues[featureIdx][2]
@@ -96,9 +95,9 @@ def computeVariation(features, featureIdx, direction, mark, normValues, model):
                 else:
                     left = currentValue
             if found:
-                return {columns[featureIdx]: [newValue, newPrediction]}
+                return [newValue, newPrediction]
             else:
-                return {columns[featureIdx]: [-1.0, -1.0]}
+                return [-1.0, -1.0]
 
 
 
@@ -126,7 +125,7 @@ def evaluate(request):
         if model == "random":
             mark = randint(1,5)
         else:
-            mark = model.predict(originalFrame.T)
+            mark = model.predict(originalFrame.T)[0]
 
 
         limits = []
@@ -137,12 +136,14 @@ def evaluate(request):
                 limits.append(value)
 
         t2 = time.time()
-
-
         print(t2-t1)
 
-        print(modelType, limits)
+        response = []
+        response.append(float(mark))
+        for tuple in limits:
+            for val in tuple:
+                response.append(float(val))
 
-        return HttpResponse(mark)
+        return HttpResponse(json.dumps(response))
 
     return render(request, 'userTest.html')
