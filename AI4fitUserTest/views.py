@@ -113,8 +113,6 @@ def evaluate(request):
 
         originalFrame = pd.DataFrame(createFeatureList(features, normValues), columns)
 
-        print(normValues)
-
         if modelType == 1:
             model = load('AI4fitUserTest/static/ExtraTreesClassifier.joblib')
         elif modelType == 2:

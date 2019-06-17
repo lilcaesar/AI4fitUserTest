@@ -8,6 +8,7 @@ var norm_values = {
     d_pace_mean: [-0.11974895486871891, -270.928316178069, 0.9224168353544497],
     d_pace_std: [0.8155474911924301, 0.0, 1715.0849130916565],
     d_pace_var: [933.0957965108744, 0.0, 2941516.259114615],
+    //r_distance: [19331.864616222036, 50.36548501253127, 42993.1843163427],
     r_distance: [19331.864616222036, 50.36548501253127, 42993.1843163427],
     r_speed: [6.219522020650246, 0.00040852929759351334, 261.9957502588009],
     r_time: [10840.839752523778, 15.0, 638462.328],
@@ -28,6 +29,144 @@ var norm_values = {
 function normalize(x, mean, min, max) {
     return (x - mean) / (max - min)
 }
+
+
+function offset(el) {
+    var rect = el.getBoundingClientRect(),
+        scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
+        scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    return {top: rect.top + scrollTop, left: rect.left + scrollLeft}
+}
+
+
+var numFeatures;
+
+
+function draw_limits(fts) {
+
+    let feature_number = numFeatures; // da reperire
+    // aggiorno e rimuovo i vecchi limiti
+    for (let i = 0; i < feature_number; i++) {
+        let id_sx = "#limit_sx_" + i;
+        let id_dx = "#limit_dx_" + i;
+        if ($(id_sx).length) {
+            $(id_sx).remove();
+        }
+        if ($(id_dx).length) {
+            $(id_dx).remove();
+        }
+
+    }
+
+    for (let k = 0; k < feature_number; k++) {
+        // creo div slider
+        var div_slider_sx = document.createElement("div");
+        div_slider_sx.id = "limit_sx_" + k;
+        div_slider_sx.className = "range-lim range-info";
+
+        var div_slider_dx = document.createElement("div");
+        div_slider_dx.id = "limit_dx_" + k;
+        div_slider_dx.className = "range-lim range-warning";
+
+        // se ho l'estremo sx
+        if (fts[workoutKeys[k]][0][0] !== -1) {
+            // creo slider
+            var input_slider = document.createElement("input");
+            input_slider.id = workoutKeys[k] + "_limit_sx";
+            input_slider.type = "range";
+            input_slider.name = "range";
+            input_slider.setAttribute("data-toggle", "tooltip");
+            input_slider.title = fts[workoutKeys[k]][0][1];
+
+            let featureValue = fts[workoutKeys[k]][0][0];
+            input_slider.setAttribute("value", featureValue);
+            var output_slider = document.createElement("output");
+            output_slider.id = input_slider.id + "_out";
+            // float limit
+            output_slider.innerHTML = featureValue.toFixed(2);
+            document.getElementById("range" + k).setAttribute("onchange", "outrange" + k + ".value=value; " + output_slider.id + ".value=value");
+            let container = document.getElementById(workoutKeys[k]);
+
+            // testo slider
+            /*
+            var input_slider_text = document.createElement("p");
+            input_slider_text.id = workoutKeys[k] + "_limit_sx_text";
+            input_slider_text.innerHTML = "ciaooo";
+            input_slider_text.left = 100;*/
+
+            div_slider_sx.append(input_slider);
+            //div_slider_sx.append(input_slider_text);
+            div_slider_sx.append(output_slider);
+            container.append(div_slider_sx);
+            div_slider_sx.classList.add("disable-div");
+            document.getElementById(output_slider.id).style.visibility = "hidden";
+        }
+
+        // se ho l'estremo dx
+        if (fts[workoutKeys[k]][1][0] !== -1) {
+            // creo slider
+            var input_slider = document.createElement("input");
+            input_slider.id = workoutKeys[k] + "_limit_dx";
+            input_slider.type = "range";
+            input_slider.name = "range";
+            input_slider.setAttribute("data-toggle", "tooltip");
+            input_slider.title = fts[workoutKeys[k]][1][1];
+
+            let featureValue = fts[workoutKeys[k]][1][0];
+            input_slider.setAttribute("value", featureValue);
+            var output_slider = document.createElement("output");
+            output_slider.id = input_slider.id + "_out";
+
+            // float limit
+            output_slider.innerHTML = featureValue.toFixed(2);
+            document.getElementById("range" + k).setAttribute("onchange", "outrange" + k + ".value=value; " + output_slider.id + ".value=value");
+            let container = document.getElementById(workoutKeys[k]);
+
+            div_slider_dx.append(input_slider);
+            div_slider_dx.append(output_slider);
+            container.append(div_slider_dx);
+            div_slider_dx.classList.add("disable-div");
+            document.getElementById(output_slider.id).style.visibility = "hidden";
+
+
+            // ancorare il numero
+            /*let pos = $("#" + input_slider.id).offset();
+            let text = document.createElement("p");
+            text.id = k + "ciaone";
+            text.style.top = pos.top;
+            text.style.left = pos.left;
+            text.innerHTML = 'a';
+            text.style.position = 'absolute';
+            container.appendChild(text)*/
+
+        }
+
+        if (fts[workoutKeys[k]][0][0] === -1 && fts[workoutKeys[k]][1][0] === -1) {
+            let featureValue = fts[workoutKeys[k]][1][0];
+            var output_slider = document.createElement("output");
+            output_slider.id = input_slider.id + "_out";
+
+            // float limit
+            output_slider.innerHTML = featureValue.toFixed(2);
+            document.getElementById("range" + k).setAttribute("onchange", "outrange" + k + ".value=value; " + output_slider.id + ".value=value");
+            let container = document.getElementById(workoutKeys[k]);
+
+            div_slider_dx.append(output_slider);
+            div_slider_dx.id = "extra_" + k;
+            container.append(div_slider_dx);
+            div_slider_dx.classList.add("disable-div");
+            document.getElementById(output_slider.id).style.visibility = "hidden";
+            div_slider_dx.style.visibility = "hidden";
+        }
+
+        if (fts[workoutKeys[k]][0][0] !== -1 && fts[workoutKeys[k]][1][0] !== -1) {
+            // per averli alla stessa altezza
+            //document.getElementById(input_slider.id).style.marginTop = '-55.5px';
+            document.getElementById(div_slider_dx.id).style.marginTop = '-33.5px';
+        }
+    }
+}
+
 
 var randomWorkouts = [];
 for (var j = 0; j < 10; j++) {
@@ -96,13 +235,13 @@ function createFeatureList() {
     return featureList
 }
 
-function createSortedNormValues(){
+function createSortedNormValues() {
     var sortedNormValues = [];
     workoutKeys.forEach(function (featureName) {
-        if(norm_values[featureName] !== undefined) {
+        if (norm_values[featureName] !== undefined) {
             sortedNormValues.push(norm_values[featureName]);
-        }else{
-            sortedNormValues.push([-1,-1,-1])
+        } else {
+            sortedNormValues.push([-1, -1, -1])
         }
     });
     return sortedNormValues;
@@ -125,12 +264,14 @@ $(document).ready(function () {
                 var data = JSON.parse(response);
                 let element = document.getElementById("mark");
                 element.innerHTML = data[0];
-                for(var predictionFeature = 0; predictionFeature < 12; predictionFeature++){
+                for (var predictionFeature = 0; predictionFeature < 12; predictionFeature++) {
                     var predictionValues = [];
-                    predictionValues.push([data[(predictionFeature*4)+1], data[(predictionFeature*4)+2]]);
-                    predictionValues.push([data[(predictionFeature*4)+3], data[(predictionFeature*4)+4]]);
+                    predictionValues.push([data[(predictionFeature * 4) + 1], data[(predictionFeature * 4) + 2]]);
+                    predictionValues.push([data[(predictionFeature * 4) + 3], data[(predictionFeature * 4) + 4]]);
                     predictions[workoutKeys[predictionFeature]] = predictionValues;
                 }
+
+                draw_limits(predictions)
             },
             error: function () {
                 console.log("Errore richiesta valutazione")
@@ -181,7 +322,7 @@ var features_meaning = {
 function generateHTML(workoutArrayIndex) {
     var currentMark = Math.trunc(randomWorkouts[workoutArrayIndex] / 3);
     var currentInstance = randomWorkouts[workoutArrayIndex] % 3;
-    var numFeatures = (Math.floor(Math.random() * 3) + 1) * 4;
+    numFeatures = (Math.floor(Math.random() * 3) + 1) * 4;
 
     modelType = Math.floor(Math.random() * 3) + 1;
     workout = workouts[currentMark][currentInstance];
@@ -203,11 +344,11 @@ function generateHTML(workoutArrayIndex) {
 
         var featureValue;
         if (workoutKeys[i] == "d_distance" || workoutKeys[i] == "d_time" || workoutKeys[i] == "d_pace_mean" ||
-                    workoutKeys[i] == "d_pace_std" || workoutKeys[i] == "d_pace_var" ||
-                    workoutKeys[i] == "p_welldone" || workoutKeys[i] == "p_walking" || workoutKeys[i] == "p_running" ||
-                    workoutKeys[i] == "p_unknown" || workoutKeys[i] == "p_has_objective") {
-            input_slider.min = norm_values[workoutKeys[i]][1]*100.0;
-            input_slider.max = norm_values[workoutKeys[i]][2]*100.0;
+            workoutKeys[i] == "d_pace_std" || workoutKeys[i] == "d_pace_var" ||
+            workoutKeys[i] == "p_welldone" || workoutKeys[i] == "p_walking" || workoutKeys[i] == "p_running" ||
+            workoutKeys[i] == "p_unknown" || workoutKeys[i] == "p_has_objective") {
+            input_slider.min = (norm_values[workoutKeys[i]][1] * 100.0).toFixed(2);
+            input_slider.max = (norm_values[workoutKeys[i]][2] * 100.0).toFixed(2);
             input_slider.step = 0.001;
             featureValue = workout[workoutKeys[i]] * 100.0;
         } else {
@@ -217,21 +358,23 @@ function generateHTML(workoutArrayIndex) {
                 featureValue = workout[workoutKeys[i]];
             } else {
                 featureValue = workout[workoutKeys[i]];
-                input_slider.min = norm_values[workoutKeys[i]][1];
-                input_slider.max = norm_values[workoutKeys[i]][2];
+                input_slider.min = norm_values[workoutKeys[i]][1].toFixed(2);
+                input_slider.max = norm_values[workoutKeys[i]][2].toFixed(2);
                 if (workoutKeys[i] == "r_speed" || workoutKeys[i] == "r_distance" || workoutKeys[i] == "r_pace" || workoutKeys[i] == "bmi") {
-                    input_slider.step = 0.001;
+                    input_slider.step = 0.01;
                 }
             }
         }
 
-        input_slider.setAttribute("value", featureValue);
-        input_slider.setAttribute("onchange", "outrange" + i + ".value=value");
+
         var output_slider = document.createElement("output");
         output_slider.id = "outrange" + i;
         //output_slider.innerHTML = workout[workoutKeys[i]];
         // float limit
         output_slider.innerHTML = featureValue.toFixed(2);
+
+        input_slider.setAttribute("value", featureValue);
+        input_slider.setAttribute("onchange", "outrange" + i + ".value=value");
 
         var container;
         if (i % 2 == 0) {
@@ -330,7 +473,6 @@ function generateHTML(workoutArrayIndex) {
         button.onclick = function () {
             $("#f1").empty();
             $("#f2").empty();
-            console.log('redirect');
             workoutArrayIndex = numFeatures;
         };
     }
