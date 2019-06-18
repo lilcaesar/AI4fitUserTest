@@ -10,7 +10,7 @@ from random import randint
 
 import pandas as pd
 import sklearn
-import json, codecs, time
+import json, codecs
 
 columns = ['o_distance', 'p_unknown', 'p_walking', 'p_running', 'r_time',
                'r_speed', 'r_distance', 'r_pace', 'o_pace', 'o_time',
@@ -127,14 +127,10 @@ def evaluate(request):
 
 
         limits = []
-        t1 = time.time()
         for featureIdx in range(12):
             for direction in range(2):
                 value = computeVariation(features, featureIdx, direction, mark, normValues, model)
                 limits.append(value)
-
-        t2 = time.time()
-        print(t2-t1)
 
         response = []
         response.append(float(mark))

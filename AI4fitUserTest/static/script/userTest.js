@@ -39,8 +39,80 @@ function offset(el) {
 }
 
 
-var numFeatures;
+// gestione info voti
+function modifyOffset() {
+    var el, newPoint, newPlace, offset, siblings, k;
+    width = this.offsetWidth;
+    //console.log(this)
+    newPoint = (this.value - this.getAttribute("min")) / (this.getAttribute("max") - this.getAttribute("min"));
+    offset = -1;
+    if (newPoint < 0) {
+        newPlace = 0;
+    } else if (newPoint > 1) {
+        newPlace = width;
+    } else {
+        newPlace = width * newPoint + offset;
+        offset -= newPoint;
+    }
+    siblings = this.parentNode.childNodes;
+    //console.log(siblings[1].nodeName);
+    for (var i = 0; i < siblings.length; i++) {
+        sibling = siblings[i];
+        if (sibling.id === this.id) {
+            k = true;
+        }
+        if ((k === true) && (sibling.nodeName === "P")) {
+            outputTag = sibling;
+        }
+    }
 
+    outputTag.style.left = newPlace + "px";
+    outputTag.style.marginLeft = (offset*6) + "%";
+    //outputTag.innerHTML = this.value;
+}
+
+
+function modifyInputs() {
+
+    //var inputs = document.getElementsByTagName("input");
+
+    let inputs = [];
+
+    for (let j = 0; j < workoutKeys.length; j++) {
+        let left_limit = workoutKeys[j] + "_limit_sx";
+        let left_elem = document.getElementById(left_limit);
+        if (left_elem !== null)
+            inputs.push(left_elem);
+
+        let right_limit = workoutKeys[j] + "_limit_dx";
+        let right_elem = document.getElementById(right_limit);
+        if (right_elem !== null)
+            inputs.push(right_elem);
+
+    }
+
+    //console.log(inputs);
+
+    for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].getAttribute("type") === "range") {
+            inputs[i].onchange = modifyOffset;
+
+            // the following taken from http://stackoverflow.com/questions/2856513/trigger-onchange-event-manually
+            if ("fireEvent" in inputs[i]) {
+                inputs[i].fireEvent("onchange");
+            } else {
+                var evt = document.createEvent("HTMLEvents");
+                evt.initEvent("change", false, true);
+                inputs[i].dispatchEvent(evt);
+            }
+        }
+    }
+}
+
+//modifyInputs();
+
+
+var numFeatures;
 
 function draw_limits(fts) {
 
@@ -59,6 +131,7 @@ function draw_limits(fts) {
     }
 
     for (let k = 0; k < feature_number; k++) {
+        //console.log(fts[workoutKeys[k]]);
         // creo div slider
         var div_slider_sx = document.createElement("div");
         div_slider_sx.id = "limit_sx_" + k;
@@ -75,24 +148,46 @@ function draw_limits(fts) {
             input_slider.id = workoutKeys[k] + "_limit_sx";
             input_slider.type = "range";
             input_slider.name = "range";
-            input_slider.setAttribute("data-toggle", "tooltip");
-            input_slider.title = fts[workoutKeys[k]][0][1];
+
+            /*** ***/
+            // valori min e max anche suglki input nascosti
+            //var featureValue;
+            if (workoutKeys[k] === "d_distance" || workoutKeys[k] === "d_time" || workoutKeys[k] === "d_pace_mean" ||
+                workoutKeys[k] === "d_pace_std" || workoutKeys[k] === "d_pace_var" ||
+                workoutKeys[k] === "p_welldone" || workoutKeys[k] === "p_walking" || workoutKeys[k] === "p_running" ||
+                workoutKeys[k] === "p_unknown" || workoutKeys[k] === "p_has_objective") {
+                input_slider.min = (norm_values[workoutKeys[k]][1] * 100.0).toFixed(2);
+                input_slider.max = (norm_values[workoutKeys[k]][2] * 100.0).toFixed(2);
+                input_slider.step = 0.001;
+                //featureValue = workout[workoutKeys[k]] * 100.0;
+            } else {
+                if (workoutKeys[k] === "bmi" || workoutKeys[k] === "weight_situation" || workoutKeys[k] === "gender") {
+                    input_slider.min = 1;
+                    input_slider.max = 5;
+                    //featureValue = workout[workoutKeys[k]];
+                } else {
+                    //featureValue = fts[workoutKeys[k]][0][0];;
+                    input_slider.min = norm_values[workoutKeys[k]][1].toFixed(2);
+                    input_slider.max = norm_values[workoutKeys[k]][2].toFixed(2);
+                    if (workoutKeys[k] === "r_speed" || workoutKeys[k] === "r_distance" || workoutKeys[k] === "r_pace" || workoutKeys[k] === "bmi") {
+                        input_slider.step = 0.01;
+                    }
+                }
+            }
+
+            /*** ***/
 
             let featureValue = fts[workoutKeys[k]][0][0];
             input_slider.setAttribute("value", featureValue);
             var output_slider = document.createElement("output");
             output_slider.id = input_slider.id + "_out";
             // float limit
-            output_slider.innerHTML = featureValue.toFixed(2);
+            //output_slider.innerHTML = featureValue.toFixed(2);
+            let curr_value = document.getElementById("outrange"+k);
+            output_slider.innerHTML = curr_value.innerHTML;
             document.getElementById("range" + k).setAttribute("onchange", "outrange" + k + ".value=value; " + output_slider.id + ".value=value");
             let container = document.getElementById(workoutKeys[k]);
 
-            // testo slider
-            /*
-            var input_slider_text = document.createElement("p");
-            input_slider_text.id = workoutKeys[k] + "_limit_sx_text";
-            input_slider_text.innerHTML = "ciaooo";
-            input_slider_text.left = 100;*/
 
             div_slider_sx.append(input_slider);
             //div_slider_sx.append(input_slider_text);
@@ -100,6 +195,19 @@ function draw_limits(fts) {
             container.append(div_slider_sx);
             div_slider_sx.classList.add("disable-div");
             document.getElementById(output_slider.id).style.visibility = "hidden";
+
+            // aggiunta mark sotto input
+            /*input_slider.setAttribute('data-toggle', 'tooltip');
+            input_slider.setAttribute('data-placement', 'bottom');
+            input_slider.setAttribute('title', fts[workoutKeys[k]][0][1]);
+            let slider_id = "#" + input_slider.id;
+            $(slider_id).css({'pointer-events': 'none'}).tooltip('show');*/
+
+            let out_info = document.createElement("p");
+            out_info.id = output_slider.id + "_info";
+            out_info.className = "mark-info-sx";
+            out_info.innerHTML = fts[workoutKeys[k]][0][1];
+            div_slider_sx.append(out_info);
         }
 
         // se ho l'estremo dx
@@ -109,8 +217,36 @@ function draw_limits(fts) {
             input_slider.id = workoutKeys[k] + "_limit_dx";
             input_slider.type = "range";
             input_slider.name = "range";
-            input_slider.setAttribute("data-toggle", "tooltip");
-            input_slider.title = fts[workoutKeys[k]][1][1];
+
+            /*** ***/
+            // valori min e max anche suglki input nascosti
+            //var featureValue;
+            if (workoutKeys[k] === "d_distance" || workoutKeys[k] === "d_time" || workoutKeys[k] === "d_pace_mean" ||
+                workoutKeys[k] === "d_pace_std" || workoutKeys[k] === "d_pace_var" ||
+                workoutKeys[k] === "p_welldone" || workoutKeys[k] === "p_walking" || workoutKeys[k] === "p_running" ||
+                workoutKeys[k] === "p_unknown" || workoutKeys[k] === "p_has_objective") {
+                input_slider.min = (norm_values[workoutKeys[k]][1] * 100.0).toFixed(2);
+                input_slider.max = (norm_values[workoutKeys[k]][2] * 100.0).toFixed(2);
+                input_slider.step = 0.001;
+                //featureValue = workout[workoutKeys[k]] * 100.0;
+            } else {
+                if (workoutKeys[k] === "bmi" || workoutKeys[k] === "weight_situation" || workoutKeys[k] === "gender") {
+                    input_slider.min = 1;
+                    input_slider.max = 5;
+                    //featureValue = workout[workoutKeys[k]];
+                } else {
+                    //featureValue = fts[workoutKeys[k]][0][0];;
+                    input_slider.min = norm_values[workoutKeys[k]][1].toFixed(2);
+                    input_slider.max = norm_values[workoutKeys[k]][2].toFixed(2);
+                    if (workoutKeys[k] === "r_speed" || workoutKeys[k] === "r_distance" || workoutKeys[k] === "r_pace" || workoutKeys[k] === "bmi") {
+                        input_slider.step = 0.01;
+                    }
+                }
+            }
+
+            /*** ***/
+
+
 
             let featureValue = fts[workoutKeys[k]][1][0];
             input_slider.setAttribute("value", featureValue);
@@ -118,7 +254,9 @@ function draw_limits(fts) {
             output_slider.id = input_slider.id + "_out";
 
             // float limit
-            output_slider.innerHTML = featureValue.toFixed(2);
+            //output_slider.innerHTML = featureValue.toFixed(2);
+            let curr_value = document.getElementById("outrange"+k);
+            output_slider.innerHTML = curr_value.innerHTML;
             document.getElementById("range" + k).setAttribute("onchange", "outrange" + k + ".value=value; " + output_slider.id + ".value=value");
             let container = document.getElementById(workoutKeys[k]);
 
@@ -128,23 +266,24 @@ function draw_limits(fts) {
             div_slider_dx.classList.add("disable-div");
             document.getElementById(output_slider.id).style.visibility = "hidden";
 
-
-            // ancorare il numero
-            /*let pos = $("#" + input_slider.id).offset();
-            let text = document.createElement("p");
-            text.id = k + "ciaone";
-            text.style.top = pos.top;
-            text.style.left = pos.left;
-            text.innerHTML = 'a';
-            text.style.position = 'absolute';
-            container.appendChild(text)*/
-
+            // aggiunta voto
+            // aggiunta mark sotto input
+            /*input_slider.setAttribute('data-toggle', 'tooltip');
+            input_slider.setAttribute('data-placement', 'bottom');
+            input_slider.setAttribute('title', fts[workoutKeys[k]][1][1]);
+            let slider_id = "#" + input_slider.id;
+            $(slider_id).css({'pointer-events': 'none'}).tooltip('show');*/
+            let out_info = document.createElement("p");
+            out_info.id = output_slider.id + "_info";
+            out_info.className = "mark-info-dx";
+            out_info.innerHTML = fts[workoutKeys[k]][1][1];
+            div_slider_dx.append(out_info);
         }
 
         if (fts[workoutKeys[k]][0][0] === -1 && fts[workoutKeys[k]][1][0] === -1) {
             let featureValue = fts[workoutKeys[k]][1][0];
             var output_slider = document.createElement("output");
-            output_slider.id = input_slider.id + "_out";
+            output_slider.id = "extra_out_"+workoutKeys[k];
 
             // float limit
             output_slider.innerHTML = featureValue.toFixed(2);
@@ -165,8 +304,18 @@ function draw_limits(fts) {
             document.getElementById(div_slider_dx.id).style.marginTop = '-33.5px';
         }
     }
-}
 
+    /*
+    let a = document.createElement("p");
+    a.id = "testo";
+    a.className = "connected";
+    a.innerHTML = '5';
+    let s = document.getElementById('model_type');
+    s.append(a);
+
+    $('#testo').positionOn($('#limit_dx_0'))*/
+
+}
 
 var randomWorkouts = [];
 for (var j = 0; j < 10; j++) {
@@ -271,7 +420,8 @@ $(document).ready(function () {
                     predictions[workoutKeys[predictionFeature]] = predictionValues;
                 }
 
-                draw_limits(predictions)
+                draw_limits(predictions);
+                modifyInputs();
             },
             error: function () {
                 console.log("Errore richiesta valutazione")
